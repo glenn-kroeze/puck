@@ -1,5 +1,5 @@
 import Entity from './Entity';
-import { vAdd, vScale, vSub, vMag, vNorm, vDot } from 'vec-la-fp';
+import {vAdd, vScale, vSub, vMag, vNorm, vDot} from 'vec-la-fp';
 
 export default class Puck extends Entity {
 
@@ -38,22 +38,14 @@ export default class Puck extends Entity {
   //verticale velocity flippen wanneer een puck tegen een horizontaal staande
   //muur aan botst en vice versa
   bounceOffWall = wall => {
-    const [x, y] = this.velocity;
-    const bouncedVelocity = wall.orientation === 'horizontal'
-      ? [x, -y]
-      : [-x, y];
-    //10% verlies in snelheid
-    this.velocity = vScale(0.9, bouncedVelocity);
-
-    //Deze implementatie werkte erg slecht bij kleine krachten
-    // const forceOfImpact = 0.5 * this.mass * vDot(this.velocity, this.velocity);
-    // const forceVector = vScale(forceOfImpact, vNorm(this.velocity));
-    // this.applyForce(vScale(-1, forceVector));
-    // if (wall.orientation === 'horizontal') {
-    //   this.applyForce(vScale(0.9, [forceVector[0], -forceVector[1]]));
-    // } else {
-    //   this.applyForce(vScale(0.9, [-forceVector[0], forceVector[1]]));
-    // }
+    const force = this.mass * vMag(this.velocity);
+    const forceVector = vScale(force, vNorm(this.velocity));
+    this.applyForce(vScale(-1, forceVector));
+    if (wall.orientation === 'horizontal') {
+      this.applyForce(vScale(0.9, [forceVector[0], -forceVector[1]]));
+    } else {
+      this.applyForce(vScale(0.9, [-forceVector[0], forceVector[1]]));
+    }
   }
 
   bounceOffPuck = puck => {
@@ -69,8 +61,8 @@ export default class Puck extends Entity {
     // const f1 = 0.5 * this.mass * vDot(myOldVelocity, myOldVelocity);
     // const f2 = 0.5 * puck.mass * vDot(otherOldVelocity, otherOldVelocity);
 
-    // this.applyForce(vScale(-f1, vMag(myOldVelocity) === 0 ? [0, 0] : vNorm(myOldVelocity)));
-    // puck.applyForce(vScale(-f2, vMag(otherOldVelocity) === 0 ? [0, 0] : vNorm(otherOldVelocity)));
+    this.applyForce(vScale(-f1, vMag(myOldVelocity) === 0 ? [0, 0] : vNorm(myOldVelocity)));
+    puck.applyForce(vScale(-f2, vMag(otherOldVelocity) === 0 ? [0, 0] : vNorm(otherOldVelocity)));
 
     // this.applyForce(vScale(-f2, normalizedVecToOtherPuck));
     // puck.applyForce(vScale(f1, normalizedVecToOtherPuck));
@@ -96,6 +88,7 @@ export default class Puck extends Entity {
       ctx.arc(...vAdd(this.pos, [this.radius, this.radius]), this.radius, 0, 2 * Math.PI);
       ctx.fill();
 
+      //Pijltje tekenen in de richting van de velocity
       ctx.strokeStyle = 'red';
       ctx.moveTo(...this.pos.map(x => x + 25));
       ctx.lineTo(...this.pos.map((x, i) => x + 25 + (this.velocity[i] * 25)));
