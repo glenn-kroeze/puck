@@ -1,6 +1,6 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import styles from './styles.scss';
-import {vScale} from 'vec-la-fp';
+import { vScale } from 'vec-la-fp';
 
 //Conversie van graden naar radialen, aangezien Math.sin en Math.cos met radialen werken
 const degToRad = deg => deg * Math.PI / 180;
@@ -19,7 +19,7 @@ export default class Controls extends Component {
     };
   }
 
-  setScalar = e => this.setState({scalar: e.target.value})
+  setScalar = e => this.setState({ scalar: e.target.value })
 
   onAction = angle => this.props.onAction(vScale(this.state.scalar, angleVector(angle)))
 
@@ -51,7 +51,7 @@ export default class Controls extends Component {
   )
 
   render() {
-    const {scalar} = this.state;
+    const { scalar } = this.state;
     return (
       <div className={styles.controls}>
         {this.actionRows.map(this.renderActionRow)}

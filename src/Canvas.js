@@ -1,5 +1,5 @@
-import React, {Component} from 'react';
-import {Puck, Wall} from './classes';
+import React, { Component } from 'react';
+import { Puck, Wall } from './classes';
 
 const walls = [
   new Wall({
@@ -29,12 +29,19 @@ const pucks = [
     visible: false
   }),
   new Puck({
-    pos: [300, 300],
+    pos: [300, 80],
     radius: 25,
     mass: 0.5,
-    color: 'black',
+    color: 'purple',
     visible: true
   }),
+  // new Puck({
+  //   pos: [340, 120],
+  //   radius: 25,
+  //   mass: 0.5,
+  //   color: 'yellow',
+  //   visible: true
+  // })
 ];
 
 export default class Canvas extends Component {
@@ -48,7 +55,7 @@ export default class Canvas extends Component {
     };
   }
 
-  updateMouse = ({clientX, clientY}) => this.setState({
+  updateMouse = ({ clientX, clientY }) => this.setState({
     mouseX: clientX,
     mouseY: clientY
   })
@@ -58,10 +65,10 @@ export default class Canvas extends Component {
   }
 
   placePuck = () => {
-    const {mouseX, mouseY} = this.state;
+    const { mouseX, mouseY } = this.state;
     pucks[0].pos = [mouseX, mouseY].map(x => x - 25);
     pucks[0].visible = true;
-    this.setState({puckPlaced: true});
+    this.setState({ puckPlaced: true });
     document.removeEventListener('mousemove', this.updateMouse);
   }
 
@@ -75,7 +82,7 @@ export default class Canvas extends Component {
 
     //De preview van de puck voordat hij geplaatst is
     if (!this.state.puckPlaced) {
-      const {mouseX, mouseY} = this.state;
+      const { mouseX, mouseY } = this.state;
       ctx.beginPath();
       ctx.fillStyle = 'navy';
       ctx.arc(mouseX, mouseY, 25, 0, 2 * Math.PI);
@@ -83,16 +90,18 @@ export default class Canvas extends Component {
     }
 
     pucks.forEach((puck, i) => {
-      const otherPuck = i === 1 ? pucks[0] : pucks[1];
+      const otherPucks = pucks.filter((p, j) => i !== j);
       walls.forEach(wall => {
         if (puck.willCollideWith(wall)) {
           puck.bounceOffWall(wall);
         }
       });
 
-      if (puck.willCollideWith(otherPuck)) {
-        puck.bounceOffPuck(otherPuck);
-      }
+      otherPucks.forEach(otherPuck => {
+        if (puck.willCollideWith(otherPuck)) {
+          puck.bounceOffPuck(otherPuck);
+        }
+      });
     });
 
     pucks.forEach(puck => puck.render(ctx));

@@ -1,7 +1,12 @@
 import Entity from './Entity';
-import {vAdd, vScale, vSub, vMag, vNorm, vDot} from 'vec-la-fp';
+import { vAdd, vScale, vSub, vMag, vNorm, vDot } from 'vec-la-fp';
+import { sum } from 'lodash-es';
 
 export default class Puck extends Entity {
+
+  fImpact = () => 0.5 * this.mass * vDot(this.velocity, this.velocity)
+
+  fImpactVec = () => vScale(this.fImpact(), vMag(this.velocity) === 0 ? [0, 0] : vNorm(this.velocity))
 
   //In beide cases (wall of puck) kijken we of er in de volgende frame
   //een botsing heeft plaatsgevonden, zodat we kunnen ingrijpen voordat
@@ -49,20 +54,39 @@ export default class Puck extends Entity {
   }
 
   bounceOffPuck = puck => {
+    const sysMomentumOld = sum([vMag(this.velocity) * this.mass, vMag(puck.velocity) * puck.mass]);
+    console.log(`System momentum before: ${sysMomentumOld}`);
     //Vector tussen de 2 pucks bepalen
     const vecToOtherPuck = vSub(puck.pos, this.pos);
     //Deze vector normaliseren, zodat we de richting van de botsing hebben
     const normalizedVecToOtherPuck = vNorm(vecToOtherPuck);
 
-    const myOldVelocity = this.velocity;
-    const otherOldVelocity = puck.velocity;
+    const fImpact1 = this.fImpact();
+    const fImpact2 = puck.fImpact();
 
-    //Deze implementatie werkte erg slecht bij kleine krachten
+    const fImpactVec1 = vScale(fImpact1, normalizedVecToOtherPuck);
+    const fImpactVec2 = vScale(-fImpact2, normalizedVecToOtherPuck);
+
+    this.applyForce(vAdd(fImpactVec2, vScale(-1, fImpactVec1)));
+    puck.applyForce(vAdd(fImpactVec1, vScale(-1, fImpactVec2)));
+
+    const sysMomentumNew = sum([vMag(this.velocity) * this.mass, vMag(puck.velocity) * puck.mass]);
+
+    console.log(`System momentum after: ${sysMomentumNew}`);
+    console.log(sysMomentumOld === sysMomentumNew
+      ? 'Momentum equal!'
+      : sysMomentumNew > sysMomentumOld
+        ? `Momentum gained: ${sysMomentumNew - sysMomentumOld}`
+        : `Momentum lost: ${sysMomentumOld - sysMomentumNew}`
+    );
+
+
+
     // const f1 = 0.5 * this.mass * vDot(myOldVelocity, myOldVelocity);
     // const f2 = 0.5 * puck.mass * vDot(otherOldVelocity, otherOldVelocity);
 
-    this.applyForce(vScale(-f1, vMag(myOldVelocity) === 0 ? [0, 0] : vNorm(myOldVelocity)));
-    puck.applyForce(vScale(-f2, vMag(otherOldVelocity) === 0 ? [0, 0] : vNorm(otherOldVelocity)));
+    // this.applyForce(vScale(-f1, vMag(myOldVelocity) === 0 ? [0, 0] : vNorm(myOldVelocity)));
+    // puck.applyForce(vScale(-f2, vMag(otherOldVelocity) === 0 ? [0, 0] : vNorm(otherOldVelocity)));
 
     // this.applyForce(vScale(-f2, normalizedVecToOtherPuck));
     // puck.applyForce(vScale(f1, normalizedVecToOtherPuck));
@@ -71,8 +95,6 @@ export default class Puck extends Entity {
     //de velocityvector van de andere puck. Dit doen we voor beide pucks.
     //De som van velocities van beide pucks is hierna onveranderd. Volgens:
     //v2,na = v1, voor en v1,na = v2,voor
-    this.velocity = vScale(-vMag(otherOldVelocity), normalizedVecToOtherPuck);
-    puck.velocity = vScale(vMag(myOldVelocity), normalizedVecToOtherPuck);
   }
 
   render = ctx => {
